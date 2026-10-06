@@ -1,0 +1,687 @@
+{
+  "info": {
+    "name": "Kanban API",
+    "description": "Colección de pruebas para la API Kanban",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "boardId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "todoColumnId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doingColumnId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doneColumnId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ticketId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "POST /api/boards - Crear tablero válido",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Tablero de Pruebas\",\n  \"description\": \"Tablero para testing\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has boardId\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData._id).to.exist;",
+              "    pm.collectionVariables.set(\"boardId\", jsonData._id);",
+              "    ",
+              "    // Guardar IDs de las 3 columnas básicas",
+              "    if (jsonData.columns && jsonData.columns.length >= 3) {",
+              "        pm.collectionVariables.set(\"todoColumnId\", jsonData.columns[0]._id);",
+              "        pm.collectionVariables.set(\"doingColumnId\", jsonData.columns[1]._id);",
+              "        pm.collectionVariables.set(\"doneColumnId\", jsonData.columns[2]._id);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/boards - Crear tablero sin nombre (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Tablero sin nombre\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/boards/:boardId - Obtener tablero con columnas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has columns array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.columns).to.be.an('array');",
+              "    pm.expect(jsonData.columns.length).to.be.at.least(3);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/boards/:boardId/columns - Agregar columna",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Columna Extra\",\n  \"position\": 3\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/boards/:boardId/columns/:columnId/tickets - Crear ticket",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Ticket de prueba\",\n  \"description\": \"Descripción del ticket\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{todoColumnId}}/tickets",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{todoColumnId}}", "tickets"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(\"Response has ticketId\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData._id).to.exist;",
+              "    pm.collectionVariables.set(\"ticketId\", jsonData._id);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST tickets - Ticket sin título (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Ticket sin título\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{todoColumnId}}/tickets",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{todoColumnId}}", "tickets"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PATCH ticket - Mover a Haciendo",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"columnId\": \"{{doingColumnId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{todoColumnId}}/tickets/{{ticketId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{todoColumnId}}", "tickets", "{{ticketId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Ticket moved to doing column\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.column).to.eql(pm.collectionVariables.get(\"doingColumnId\"));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PATCH ticket - Repetir mismo PATCH (idempotencia)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"columnId\": \"{{doingColumnId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{todoColumnId}}/tickets/{{ticketId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{todoColumnId}}", "tickets", "{{ticketId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Ticket still in doing column (idempotent)\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.column).to.eql(pm.collectionVariables.get(\"doingColumnId\"));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PATCH ticket - Mover a Hecho",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"columnId\": \"{{doneColumnId}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{doingColumnId}}/tickets/{{ticketId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{doingColumnId}}", "tickets", "{{ticketId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Ticket moved to done column\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.column).to.eql(pm.collectionVariables.get(\"doneColumnId\"));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PATCH ticket - Título vacío (400)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{doneColumnId}}/tickets/{{ticketId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{doneColumnId}}", "tickets", "{{ticketId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "PATCH ticket - Sin campos (400)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{doneColumnId}}/tickets/{{ticketId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{doneColumnId}}", "tickets", "{{ticketId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/boards/:boardId - ID con formato inválido (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/invalid-id-format",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "invalid-id-format"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/boards/:boardId - Tablero inexistente (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/507f1f77bcf86cd799439011",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "507f1f77bcf86cd799439011"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST tickets - Columna inexistente (404)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Ticket en columna inexistente\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/507f1f77bcf86cd799439011/tickets",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "507f1f77bcf86cd799439011", "tickets"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/boards - Listar tableros",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is array\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('array');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE /api/boards/:boardId/columns/:columnId - Eliminar columna",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}/columns/{{doneColumnId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}", "columns", "{{doneColumnId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE /api/boards/:boardId - Eliminar tablero con cascada",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 204\", function () {",
+              "    pm.response.to.have.status(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /api/boards/:boardId - Verificar tablero eliminado (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/boards/{{boardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "boards", "{{boardId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test(\"Response has error\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
